@@ -84,6 +84,10 @@ The intelligence and workflow are managed by a Julep Agent and a Julep Task work
     *   `--reload` enables auto-reloading on code changes (useful for development).
     *   The API will be available at `http://localhost:8000`.
 
+## 📸 Attachments 
+
+
+
 ## 🔌 API Endpoint
 
 ### `/research`
