@@ -86,6 +86,14 @@ The intelligence and workflow are managed by a Julep Agent and a Julep Task work
 
 ## 📸 Attachments 
 
+Here's a view of the code structure before refactoring:
+![Code Structure Before Refactor](resources/Screenshot%202025-04-25%20191800.png)
+
+And after refactoring for better readability:
+![Code Structure After Refactor](resources/Screenshot%202025-04-25%20191818.png)
+
+Example output from the API:
+![Example API Output](resources/image.png)
 
 
 ## 🔌 API Endpoint
