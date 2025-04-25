@@ -1,6 +1,6 @@
 # Julep AI Research Assistant 🤖
 
-This project implements an AI-powered research assistant using the Julep AI platform. It exposes a simple web API endpoint built with FastAPI that accepts a research topic and a desired output format. The backend then utilizes a Julep Task, associated with a configured Julep Agent, to perform research (currently using the Wikipedia integration) and format the findings according to the user's request. The application is designed for deployment on platforms like Railway.
+This project implements an AI-powered research assistant using the Julep AI platform. It exposes a simple web API endpoint built with FastAPI that accepts a research topic and a desired output format. The backend then utilizes a Julep Task, associated with a configured Julep Agent, to perform research (currently using the Wikipedia integration) and format the findings according to the user's request. The application is designed for deployment on platforms like Render.
 
 ## ✨ Overview
 
@@ -16,9 +16,16 @@ The core task is to provide concise and accurately formatted information on a gi
 * Returns the formatted research result as a JSON response.
 * Built with Python and FastAPI for easy deployment.
 
+## 🚀 In Action
+
+Test the live API endpoint deployed on Render:
+
+* **Live Endpoint URL:** [https://julep-web-search-agent.onrender.com](https://julep-web-search-agent.onrender.com)
+* *(Note: The API expects POST requests to the `/research` path, e.g., `https://julep-web-search-agent.onrender.com/research`)*
+
 ## 📁 Directory Structure
 
-└── ansuman-shukla-julep-web-search-agent/├── readMe.md                 # This file├── main.py                   # FastAPI application entry point, handles setup & endpoint├── requirements.txt          # Python dependencies├── search_task.yaml          # Julep Task definition for the research workflow├── .env.example              # Example environment variables file├── models/                   # Pydantic models (likely for request/response)│   ├── queryModels.py        # Pydantic model for request data│   ├── responseModel.py      # Pydantic model for response data│   └── pycache/├── resources/                # Placeholder for any static resources (if needed)├── routes/                   # FastAPI router definitions│   ├── askRoute.py           # Defines the /research API route logic│   └── pycache/├── service/                  # Business logic, interaction with Julep│   ├── agent.py              # Contains logic for creating/managing Julep agent & task execution│   └── pycache/└── venv/                     # Virtual environment (if created locally, usually in .gitignore)
+ansuman-shukla-julep-web-search-agent/├── .env.example              # Example environment variables file├── readMe.md                 # This file├── main.py                   # FastAPI application entry point, handles setup & endpoint├── requirements.txt          # Python dependencies├── search_task.yaml          # Julep Task definition for the research workflow├── models/                   # Pydantic models (likely for request/response)│   ├── queryModels.py        # Pydantic model for request data│   ├── responseModel.py      # Pydantic model for response data│   └── pycache/├── resources/                # Placeholder for any static resources (if needed)├── routes/                   # FastAPI router definitions│   ├── askRoute.py           # Defines the /research API route logic│   └── pycache/├── service/                  # Business logic, interaction with Julep│   ├── agent.py              # Contains logic for creating/managing Julep agent & task execution│   └── pycache/└── venv/                     # Virtual environment (if created locally, usually in .gitignore)
 *(Note: The specific implementation details within `models/`, `routes/`, and `service/` might vary based on your final code structure, but this reflects the provided layout.)*
 
 ## 🛠️ Technology Stack
@@ -30,7 +37,7 @@ The core task is to provide concise and accurately formatted information on a gi
     * Tasks
     * Executions
     * Wikipedia Integration
-* **Deployment:** Railway.app (or similar PaaS)
+* **Deployment:** Render (or similar PaaS)
 * **Dependencies:** `julep-ai`, `fastapi`, `uvicorn`, `python-dotenv`, `pyyaml` (see `requirements.txt`)
 
 ## 🧠 Julep Agent Design
@@ -116,7 +123,7 @@ The research process is defined as a Julep Task, which orchestrates the interact
     ```
 * **Example Request (`curl`):**
     ```bash
-    curl -X POST "http://localhost:8000/research" \
+    curl -X POST "[https://julep-web-search-agent.onrender.com/research](https://julep-web-search-agent.onrender.com/research)" \
          -H "Content-Type: application/json" \
          -d '{
                "topic": "Theory of Relativity",
@@ -133,19 +140,23 @@ The research process is defined as a Julep Task, which orchestrates the interact
     ```
 * **Error Response:** Returns appropriate HTTP status codes (e.g., 422, 500, 502, 504) with a JSON body containing `{"detail": "Error message"}`.
 
-## 🚀 Deployment (Railway)
+## 🚀 Deployment (Render)
 
-This application is configured for deployment on Railway.app.
+This application is suitable for deployment on Render.
 
 1.  Push your code to a GitHub/GitLab repository.
-2.  Create a new project on Railway and connect it to your repository.
-3.  Railway should automatically detect the `Procfile` (`web: uvicorn main:app --host 0.0.0.0 --port $PORT`) and Python environment.
-4.  **Add Environment Variables** in the Railway service settings:
+2.  Create a new "Web Service" on Render and connect it to your repository.
+3.  Configure the service settings:
+    * **Environment:** Python 3
+    * **Build Command:** `pip install -r requirements.txt` (Render usually detects this)
+    * **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT` (Render injects the `$PORT` variable)
+4.  **Add Environment Variables** in the Render service settings:
     * `JULEP_API_KEY`
     * `JULEP_AGENT_ID`
+    * `PYTHON_VERSION` (Specify a compatible Python 3 version, e.g., `3.11`)
     * *(Any other necessary keys like `BRAVE_API_KEY` if used)*
-5.  Railway will build and deploy the application.
-6.  **Live API Endpoint:** `https://your-app-name.up.railway.app/research` (Replace `your-app-name` with your actual Railway service URL).
+5.  Deploy the service.
+6.  **Live API Endpoint:** Render will provide a URL like `https://your-app-name.onrender.com`. Use this URL for API requests to the `/research` path.
 
 ## 📚 `docs.julep.ai` Usage
 
@@ -157,3 +168,15 @@ The official Julep AI documentation ([docs.julep.ai](https://docs.julep.ai/)) wa
 * Using Python expressions (`$`, `_`) within task definitions.
 * Python SDK usage for creating Agents, Tasks, and Executions, and for polling execution status.
 * API reference for specific SDK methods and parameters.
+
+## 🤔 Challenges (Example)
+
+* **Task vs. Session:** Initially considered using Julep Sessions, but Tasks proved more suitable for this defined, multi-step workflow (tool call -> LLM processing) triggered by an API, rather than an ongoing conversation.
+* **YAML Syntax:** Ensuring correct indentation and Python expression syntax (`$ f'...'`, accessing step outputs like `steps[0].output`) within the `search_task.yaml` required careful checking against documentation.
+* **API Key Management:** Deciding how to securely provide API keys (like Brave's, if used) to the Julep Task. Using environment variables passed during application startup to modify the YAML dictionary in memory was one approach, though configuring secrets directly on the Julep Agent/Tool might be preferable if supported.
+* **Output Parsing:** Understanding the exact structure of the `result.output` from a task execution, especially when the last step uses `unwrap: true`.
+* **LLM Formatting:** Initially, the LLM generated all formats despite being asked for one. This required refining the system prompt in the task YAML to use conditional logic, ensuring only the relevant formatting instruction was passed for each specific execution.
+
+---
+
+*This README provides a comprehensive guide to understanding, setting up, and using the Julep AI Research Assistant.*
