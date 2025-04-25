@@ -72,11 +72,10 @@ The intelligence and workflow are managed by a Julep Agent and a Julep Task work
     *   Add your Julep API key:
         ```dotenv
         JULEP_API_KEY=your_actual_julep_api_key
-        # JULEP_AGENT_ID=your_agent_id # Not strictly needed for current startup logic, see note below
+        JULEP_AGENT_ID=your_agent_id # Not strictly needed for current startup logic, see note below
         ```
     *   Replace `your_actual_julep_api_key` with your real key from Julep AI.
     *   **Note on `JULEP_AGENT_ID`:** The current `service/agent.py` creates a *new* agent on startup. If you modify the code to *reuse* a specific agent, you would uncomment `JULEP_AGENT_ID` and add the ID here.
-    *   **Important:** Add `.env` to your `.gitignore` file to prevent committing secrets.
 
 6.  **Run the Application:**
     ```bash
