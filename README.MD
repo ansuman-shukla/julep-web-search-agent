@@ -17,7 +17,7 @@ The intelligence and workflow are managed by a Julep Agent and a Julep Task work
 ### Julep Agent (`service/agent.py`)
 
 *   **Name:** `Wikipedia Research Agent`
-*   **Model:** `gemini-1.5-flash` (as specified in `service/agent.py`, adjust if different)
+*   **Model:** `gemini-2.0-flash` (as specified in `service/agent.py`, adjust if different)
 *   **Purpose:** To act as the LLM brain that processes the content retrieved by the Wikipedia tool. It formats this content based on layered instructions provided during its creation.
 *   **Instructions (Layered):**
     1.  **Core Role:** "You are processing content fetched from Wikipedia. Format this content strictly according to the user's request ('summary', 'bullet points', 'short report')." (Derived from `agent.py` base and task instructions)
