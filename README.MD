@@ -133,9 +133,9 @@ The intelligence and workflow are managed by a Julep Agent and a Julep Task work
 
 This application is configured for deployment on Render.
 
-    ```bash
-    https://julep-web-search-agent.onrender.com
-    ```
+ ```bash
+ https://julep-web-search-agent.onrender.com
+ ```
 
 
 1.  Push your code (including `requirements.txt` and ensuring `.env` is in `.gitignore`) to a GitHub/GitLab repository.
