@@ -136,21 +136,7 @@ This application is configured for deployment on Render.
  ```bash
  https://julep-web-search-agent.onrender.com
  ```
-
-
-1.  Push your code (including `requirements.txt` and ensuring `.env` is in `.gitignore`) to a GitHub/GitLab repository.
-2.  Create a new **Web Service** on Render and connect it to your repository.
-3.  Configure the service settings:
-    *   **Environment:** `Python 3`
-    *   **Region:** Choose a suitable region.
-    *   **Build Command:** `pip install -r requirements.txt` (Render usually auto-detects this).
-    *   **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT` (Render injects the `$PORT` environment variable).
-4.  Add **Environment Variables** in the Render service settings (under the "Environment" tab):
-    *   `JULEP_API_KEY`: Your Julep API key.
-    *   `PYTHON_VERSION`: Specify a Python 3 version compatible with your code (e.g., `3.11`).
-    *   *(Add `JULEP_AGENT_ID` here only if you modify the code to require it)*
-5.  Deploy the service. Render will build and start your application.
-6.  **Live API Endpoint:** Render provides a public URL (e.g., `https://your-app-name.onrender.com`). Use this base URL for API requests to the `/research` path.
+  **Live API Endpoint:**  Use this base URL for API requests to the `/research` path. 
 
 ## 📚 `docs.julep.ai` Usage
 
