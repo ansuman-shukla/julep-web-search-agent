@@ -159,5 +159,3 @@ The official Julep AI documentation ([docs.julep.ai](https://docs.julep.ai/)) wa
 *   **Tool Usage:** Integrating the standard `wikipedia` tool was straightforward using the `tools` and `tool` step definitions in the YAML.
 
 ---
-
-*This README provides a comprehensive guide to understanding, setting up, running, and deploying the Julep AI Research Assistant.*
