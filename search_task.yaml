@@ -11,7 +11,7 @@ input_schema:
     output_format:
       type: string
       description: The format of the response ("summary", "bullet points", "short report").
-      # Optional: Add enum for stricter validation if Julep supports it
+      # Added enum for stricter validation
       enum: ["summary", "bullet points", "short report"]
   required:
     - topic
@@ -24,14 +24,6 @@ tools:
       provider: wikipedia
     # No 'setup' needed here if using the standard Wikipedia integration
 
-  # - name: internet_search
-  #   type: integration
-  #   integration:
-  #   provider: brave
-  #   setup:
-  #     api_key: "YOUR_BRAVE_API_KEY"
-  # planed to use this Tool also in the agent but i cant get an API key from brave [My bank card was not supported for {Required for free one also}]
-
 main:
   # Step 0: Call the Wikipedia tool with the input topic
   - tool: wikipedia
@@ -40,33 +32,33 @@ main:
       # Use 'query' as a common standard. Check Julep's specific tool docs if needed.
       query: $ steps[0].input.topic
 
-
-
-
-
   # Step 1: Process the Wikipedia content from Step 0 using the LLM (Agent)
   - prompt:
       - role: system
+        # Use Python expression to dynamically generate the system prompt content
+        # This ensures only the relevant formatting instruction is given to the LLM
         content: >-
           $ f'''You are {agent.name if agent else 'a research assistant'}.
-          Your task is to take the provided Wikipedia content about the topic "{steps[0].input.topic}" and format it according to the user's requested output format: "{steps[0].input.output_format}".
+          Your task is to take the provided Wikipedia content about the topic "{steps[0].input.topic}" and format it *only* as a "{steps[0].input.output_format}".
           Base your response *strictly* on the provided Wikipedia text below.
-          Adhere precisely to the format requirements:
-          - 'summary': Provide only a 3-4 sentence summary.
-          - 'bullet points': Provide only a maximum of 5 concise bullet points using '*'.
-          - 'short report': Provide only a coherent text report under 150 words.
-          If the provided Wikipedia content is empty, indicates an error (like 'page not found'), or is insufficient to fulfill the request, state that clearly.'''
+          {
+              # Conditional formatting instructions: Only include the one requested
+              "Adhere precisely to the following format requirement:\n" +
+              ("- 'summary': Provide only a 3-4 sentence summary." if steps[0].input.output_format == 'summary' else "") +
+              ("- 'bullet points': Provide only a maximum of 5 concise bullet points using '*'. " if steps[0].input.output_format == 'bullet points' else "") +
+              ("- 'short report': Provide only a coherent text report under 150 words." if steps[0].input.output_format == 'short report' else "")
+          }
+          If the provided Wikipedia content is empty, indicates an error (like 'page not found'), or is insufficient to fulfill the request, state that clearly instead of generating the requested format.'''
+
       - role: user
         # Access the output of the previous step (step 0 - the tool call)
-        # Assuming the wikipedia tool's relevant text output is directly in steps[0].output
-        # It might be nested like steps[0].output.content or steps[0].output.summary
-        # Adjust this based on inspecting the actual tool output if necessary.
+        # Handle potential None or empty output from the tool gracefully
         content: >-
           $ f'''Provided Wikipedia Content for topic "{steps[0].input.topic}":
           ---
-          {steps[0].output}
+          {steps[0].output if steps[0].output else "No content found or error fetching content."}
           ---
 
-          Please format this content as a "{steps[0].input.output_format}".'''
+          Please format this content strictly as a "{steps[0].input.output_format}".'''
     # Ensure the direct text response from the LLM is the final output of this step and the task
     unwrap: true
