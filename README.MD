@@ -157,14 +157,3 @@ The official Julep AI documentation ([docs.julep.ai](https://docs.julep.ai/)) wa
 * Using Python expressions (`$`, `_`) within task definitions.
 * Python SDK usage for creating Agents, Tasks, and Executions, and for polling execution status.
 * API reference for specific SDK methods and parameters.
-
-## 🤔 Challenges (Example)
-
-* **Task vs. Session:** Initially considered using Julep Sessions, but Tasks proved more suitable for this defined, multi-step workflow (tool call -> LLM processing) triggered by an API, rather than an ongoing conversation.
-* **YAML Syntax:** Ensuring correct indentation and Python expression syntax (`$ f'...'`, accessing step outputs like `steps[0].output`) within the `search_task.yaml` required careful checking against documentation.
-* **API Key Management:** Deciding how to securely provide API keys (like Brave's, if used) to the Julep Task. Using environment variables passed during application startup to modify the YAML dictionary in memory was one approach, though configuring secrets directly on the Julep Agent/Tool might be preferable if supported.
-* **Output Parsing:** Understanding the exact structure of the `result.output` from a task execution, especially when the last step uses `unwrap: true`.
-
----
-
-*This README provides a comprehensive guide to understanding, setting up, and using the Julep AI Research Assistant.*
