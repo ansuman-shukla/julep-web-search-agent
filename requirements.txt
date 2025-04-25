@@ -1,0 +1,6 @@
+julep
+fastapi
+uvicorn
+python-dotenv 
+pydantic
+PyYAML

@@ -1,0 +1,72 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/julep-ai/julep/refs/heads/dev/schemas/create_task_request.json
+name: "Wikipedia Research Task" # Consistent Name
+description: "You are Research Assistant. Your primary goal is to provide accurate and concise information based on user requests using Wikipedia."
+
+input_schema:
+  type: object
+  properties:
+    topic:
+      type: string
+      description: The topic to search for on Wikipedia.
+    output_format:
+      type: string
+      description: The format of the response ("summary", "bullet points", "short report").
+      # Optional: Add enum for stricter validation if Julep supports it
+      enum: ["summary", "bullet points", "short report"]
+  required:
+    - topic
+    - output_format
+
+tools:
+  - name: wikipedia # Tool name used in the 'tool' step below
+    type: integration
+    integration:
+      provider: wikipedia
+    # No 'setup' needed here if using the standard Wikipedia integration
+
+  # - name: internet_search
+  #   type: integration
+  #   integration:
+  #   provider: brave
+  #   setup:
+  #     api_key: "YOUR_BRAVE_API_KEY"
+  # planed to use this Tool also in the agent but i cant get an API key from brave [My bank card was not supported for {Required for free one also}]
+
+main:
+  # Step 0: Call the Wikipedia tool with the input topic
+  - tool: wikipedia
+    arguments:
+      # Assuming the tool takes a 'query' or 'page' argument.
+      # Use 'query' as a common standard. Check Julep's specific tool docs if needed.
+      query: $ steps[0].input.topic
+
+
+
+
+
+  # Step 1: Process the Wikipedia content from Step 0 using the LLM (Agent)
+  - prompt:
+      - role: system
+        content: >-
+          $ f'''You are {agent.name if agent else 'a research assistant'}.
+          Your task is to take the provided Wikipedia content about the topic "{steps[0].input.topic}" and format it according to the user's requested output format: "{steps[0].input.output_format}".
+          Base your response *strictly* on the provided Wikipedia text below.
+          Adhere precisely to the format requirements:
+          - 'summary': Provide only a 3-4 sentence summary.
+          - 'bullet points': Provide only a maximum of 5 concise bullet points using '*'.
+          - 'short report': Provide only a coherent text report under 150 words.
+          If the provided Wikipedia content is empty, indicates an error (like 'page not found'), or is insufficient to fulfill the request, state that clearly.'''
+      - role: user
+        # Access the output of the previous step (step 0 - the tool call)
+        # Assuming the wikipedia tool's relevant text output is directly in steps[0].output
+        # It might be nested like steps[0].output.content or steps[0].output.summary
+        # Adjust this based on inspecting the actual tool output if necessary.
+        content: >-
+          $ f'''Provided Wikipedia Content for topic "{steps[0].input.topic}":
+          ---
+          {steps[0].output}
+          ---
+
+          Please format this content as a "{steps[0].input.output_format}".'''
+    # Ensure the direct text response from the LLM is the final output of this step and the task
+    unwrap: true
