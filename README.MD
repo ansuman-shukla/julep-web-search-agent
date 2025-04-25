@@ -1,85 +1,60 @@
-# Julep AI Research Assistant 🤖
-
-This project implements an AI-powered research assistant using the Julep AI platform. It exposes a simple web API endpoint built with FastAPI that accepts a research topic and a desired output format. The backend then utilizes a Julep Task, associated with a configured Julep Agent, to perform research (currently using the Wikipedia integration) and format the findings according to the user's request. The application is designed for deployment on platforms like Render.
-
-## ✨ Overview
-
-The core task is to provide concise and accurately formatted information on a given topic. The system leverages Julep AI's capabilities for managing AI agent instructions, integrating external tools (Wikipedia), and orchestrating multi-step workflows (Tasks).
-
-**Key Features:**
-
-* Accepts `topic` and `output_format` via a POST request.
-* Uses a Julep Task (`search_task.yaml`) to define the research workflow.
-* Integrates with the Julep Wikipedia tool to fetch information.
-* Utilizes a configured Julep Agent to process and format the fetched content based on instructions.
-* Supports output formats: `summary`, `bullet points`, `short report`.
-* Returns the formatted research result as a JSON response.
-* Built with Python and FastAPI for easy deployment.
-
-## 🚀 In Action
-
-Test the live API endpoint deployed on Render:
-
-* **Live Endpoint URL:** [https://julep-web-search-agent.onrender.com](https://julep-web-search-agent.onrender.com)
-* *(Note: The API expects POST requests to the `/research` path, e.g., `https://julep-web-search-agent.onrender.com/research`)*
-
-## 📁 Directory Structure
-
-ansuman-shukla-julep-web-search-agent/├── .env.example              # Example environment variables file├── readMe.md                 # This file├── main.py                   # FastAPI application entry point, handles setup & endpoint├── requirements.txt          # Python dependencies├── search_task.yaml          # Julep Task definition for the research workflow├── models/                   # Pydantic models (likely for request/response)│   ├── queryModels.py        # Pydantic model for request data│   ├── responseModel.py      # Pydantic model for response data│   └── pycache/├── resources/                # Placeholder for any static resources (if needed)├── routes/                   # FastAPI router definitions│   ├── askRoute.py           # Defines the /research API route logic│   └── pycache/├── service/                  # Business logic, interaction with Julep│   ├── agent.py              # Contains logic for creating/managing Julep agent & task execution│   └── pycache/└── venv/                     # Virtual environment (if created locally, usually in .gitignore)
-*(Note: The specific implementation details within `models/`, `routes/`, and `service/` might vary based on your final code structure, but this reflects the provided layout.)*
-
 ## 🛠️ Technology Stack
 
-* **Backend:** Python 3.x
-* **API Framework:** FastAPI
-* **AI Platform:** Julep AI
-    * Agents
-    * Tasks
-    * Executions
-    * Wikipedia Integration
-* **Deployment:** Render (or similar PaaS)
-* **Dependencies:** `julep-ai`, `fastapi`, `uvicorn`, `python-dotenv`, `pyyaml` (see `requirements.txt`)
+*   **Backend:** Python 3.x 🐍
+*   **API Framework:** FastAPI 🚀
+*   **AI Platform:** Julep AI 🧠
+    *   Agents (LLM configuration & instructions)
+    *   Tasks (Workflow definition)
+    *   Executions (Running tasks)
+    *   Tools (Wikipedia Integration)
+*   **Deployment:** Render ☁️ (or similar PaaS)
+*   **Dependencies:** `julep-ai`, `fastapi`, `uvicorn`, `python-dotenv`, `pydantic`, `pyyaml` (see `requirements.txt`)
 
-## 🧠 Julep Agent Design
+## 🧠 Core Concepts: Julep Agent & Task
 
-The core intelligence lies within the Julep Agent, configured to act as a research assistant specializing in processing Wikipedia content.
+The intelligence and workflow are managed by a Julep Agent and a Julep Task working together.
 
-* **Name:** `Wikipedia Research Agent`
-* **Model:** `gemini-1.5-flash` (or your chosen model)
-* **Role:** To process pre-fetched Wikipedia content and format it according to specific user requirements.
-* **Instructions:** The agent is guided by layered instructions provided during its creation. These instructions are crucial for the LLM's behavior within the `prompt` step of the Julep Task:
-    1.  **Core Task:** "You are processing content fetched from Wikipedia. Format this content strictly according to the user's request ('summary', 'bullet points', 'short report')."
-    2.  **Formatting Constraints:** "Adhere to length and style constraints: summary (3-4 sentences), bullet points (max 5, use '*'), short report (under 150 words)."
-    3.  **Error Handling:** "If the provided content is insufficient or indicates an error, state that clearly."
-* **Agent ID:** `YOUR_JULEP_AGENT_ID` (Replace with the actual ID generated when you create the agent. This is needed in the environment variables).
+### Julep Agent (`service/agent.py`)
 
-## 📝 Julep Task (`search_task.yaml`)
+*   **Name:** `Wikipedia Research Agent`
+*   **Model:** `gemini-1.5-flash` (as specified in `service/agent.py`, adjust if different)
+*   **Purpose:** To act as the LLM brain that processes the content retrieved by the Wikipedia tool. It formats this content based on layered instructions provided during its creation.
+*   **Instructions (Layered):**
+    1.  **Core Role:** "You are processing content fetched from Wikipedia. Format this content strictly according to the user's request ('summary', 'bullet points', 'short report')." (Derived from `agent.py` base and task instructions)
+    2.  **Formatting Constraints:** "Adhere to length and style constraints: summary (3-4 sentences), bullet points (max 5, use '*'), short report (under 150 words)." (From `agent.py`)
+    3.  **Error Handling/Persona:** "If the provided content is insufficient or indicates an error, state that clearly." (From `agent.py`) + Neutral, objective tone derived from the task prompt.
+*   **Creation:** The agent is created (or potentially retrieved if Julep supports idempotency by name, though the current code uses `client.agents.create`) **on application startup** within `service/agent.py`. The `JULEP_AGENT_ID` environment variable is *not* strictly required by the current code logic but is good practice if you adapt the code to retrieve a pre-existing agent.
 
-The research process is defined as a Julep Task, which orchestrates the interaction between the input, tools, and the agent.
+### Julep Task (`search_task.yaml`)
 
-* **Name:** `Wikipedia Research Task`
-* **Purpose:** To fetch Wikipedia content for a given topic and then use the associated Julep Agent to format that content.
-* **Input Schema:** Expects `topic` (string) and `output_format` (string: "summary", "bullet points", or "short report").
-* **Tools Used:** `wikipedia` (Julep Integration)
-* **Workflow:**
-    1.  **Tool Call:** Executes the `wikipedia` tool using the input `topic` as the query.
-    2.  **Prompt:** Takes the output from the Wikipedia tool and sends it, along with the original topic and desired format, to the associated Julep Agent (LLM) for processing and formatting according to the agent's instructions. The `unwrap: true` setting ensures the LLM's direct text response is the final output.
-* **Task ID:** `YOUR_JULEP_TASK_ID` (Replace with the actual ID generated when the task is created via the script. Storing this might be useful but the current `main.py` creates it on startup).
+*   **Name:** `Wikipedia Research Task`
+*   **Purpose:** To define and orchestrate the research workflow: receive input, use a tool, and prompt the agent for the final output.
+*   **Input Schema:** Expects `topic` (string) and `output_format` (string enum: "summary", "bullet points", or "short report").
+*   **Tools Used:** `wikipedia` (Julep's built-in integration).
+*   **Workflow (`main` steps):**
+    1.  **Tool Call (`tool: wikipedia`):** Executes the `wikipedia` tool using the input `topic` as the query (`$ steps[0].input.topic`).
+    2.  **Prompt (`prompt:`):** This step interacts with the associated Julep Agent (LLM).
+        *   **System Prompt:** *Dynamically generated* using Python f-strings (`$ f'...'`) within the YAML. It tells the agent its role, the topic, and *only the specific formatting instruction* relevant to the current request's `output_format` (e.g., only includes the 'summary' instruction if `output_format` is 'summary'). This makes the agent's task clearer.
+        *   **User Prompt:** Provides the actual content fetched from the Wikipedia tool (`steps[0].output`) to the agent, clearly indicating the source and reiterating the topic and desired format.
+        *   **`unwrap: true`:** Ensures the final output of the task is the direct text response from the LLM in this step, rather than a structured object.
+*   **Creation:** Similar to the agent, the task is created (using the definition loaded from `search_task.yaml`) **on application startup** within `service/agent.py` and associated with the created agent.
 
 ## ⚙️ Setup and Running Locally
 
 1.  **Prerequisites:**
-    * Python 3.9+
-    * `pip` package installer
+    *   Python 3.9+
+    *   `pip` package installer
+    *   Git
 
 2.  **Clone the Repository:**
     ```bash
-    git clone <your-repository-url>
-    cd ansuman-shukla-julep-web-search-agent
+    git clone https://github.com/ansuman-shukla/julep-web-search-agent.git
+    cd julep-web-search-agent
     ```
 
-3.  **Create Virtual Environment:**
+3.  **Create and Activate Virtual Environment:**
     ```bash
+    # Create venv
     python -m venv venv
     # Activate (Linux/macOS)
     source venv/bin/activate
@@ -92,91 +67,107 @@ The research process is defined as a Julep Task, which orchestrates the interact
     pip install -r requirements.txt
     ```
 
-5.  **Environment Variables:**
-    * Create a `.env` file in the project root.
-    * Copy the contents of `.env.example` (if provided) or add the following:
+5.  **Configure Environment Variables:**
+    *   Create a file named `.env` in the project root directory.
+    *   Add your Julep API key:
         ```dotenv
         JULEP_API_KEY=your_actual_julep_api_key
-        JULEP_AGENT_ID=your_actual_julep_agent_id # Get this after running the agent creation part of the script once
-        # Add any other required keys like BRAVE_API_KEY if you switch tools
+        # JULEP_AGENT_ID=your_agent_id # Not strictly needed for current startup logic, see note below
         ```
-    * Replace placeholders with your actual credentials. **Never commit your `.env` file!**
+    *   Replace `your_actual_julep_api_key` with your real key from Julep AI.
+    *   **Note on `JULEP_AGENT_ID`:** The current `service/agent.py` creates a *new* agent on startup. If you modify the code to *reuse* a specific agent, you would uncomment `JULEP_AGENT_ID` and add the ID here.
+    *   **Important:** Add `.env` to your `.gitignore` file to prevent committing secrets.
 
 6.  **Run the Application:**
     ```bash
     uvicorn main:app --reload --host 0.0.0.0 --port 8000
     ```
-    The API will be available at `http://localhost:8000`.
+    *   `--reload` enables auto-reloading on code changes (useful for development).
+    *   The API will be available at `http://localhost:8000`.
 
 ## 🔌 API Endpoint
 
 ### `/research`
 
-* **Method:** `POST`
-* **Description:** Submits a research topic and desired format to the Julep agent task.
-* **Request Body:** (`application/json`)
+*   **Method:** `POST`
+*   **Description:** Submits a research topic and desired output format to the Julep agent task. The backend initiates a Julep execution, polls for its completion, and returns the result.
+*   **Request Body:** (`application/json`) - Validated using `models/queryModels.py`
     ```json
     {
       "topic": "String: The subject to research",
       "format": "String: 'summary' | 'bullet points' | 'short report'"
     }
     ```
-* **Example Request (`curl`):**
+*   **Example Request (`curl` to the deployed Render instance):**
     ```bash
-    curl -X POST "[https://julep-web-search-agent.onrender.com/research](https://julep-web-search-agent.onrender.com/research)" \
+    curl -X POST "https://julep-web-search-agent.onrender.com/research" \
          -H "Content-Type: application/json" \
          -d '{
                "topic": "Theory of Relativity",
                "format": "summary"
              }'
     ```
-* **Success Response:** (`application/json`)
+*   **Success Response:** (`application/json`, Status Code `200`) - Validated using `models/responseModel.py`
     ```json
     {
-      "result": "String: The formatted research result from the agent.",
-      "status": "succeeded",
-      "execution_id": "String: The Julep execution ID for tracking."
+      "result": "String: The formatted research result from the agent."
+      // Note: The actual response from the current code only includes 'result'.
+      // Status and execution_id could be added if needed.
     }
     ```
-* **Error Response:** Returns appropriate HTTP status codes (e.g., 422, 500, 502, 504) with a JSON body containing `{"detail": "Error message"}`.
+    *Example Result (Summary):*
+    ```json
+    {
+      "result": "The theory of relativity usually encompasses two interrelated theories by Albert Einstein: special relativity and general relativity. Special relativity applies to all physical phenomena in the absence of gravity, while general relativity explains the law of gravitation and its relation to other forces of nature. It has been foundational to modern physics, transforming theoretical physics and astronomy during the 20th century."
+    }
+    ```
+*   **Error Response:** Returns appropriate HTTP status codes (e.g., `422` for invalid input, `500` for Julep execution failures or internal errors) with a JSON body:
+    ```json
+    {
+      "detail": "Error message describing the issue"
+      // Or for Julep execution errors from the current code:
+      // {"error": "Execution failed...", "details": "..."}
+    }
+    ```
 
 ## 🚀 Deployment (Render)
 
-This application is suitable for deployment on Render.
+This application is configured for deployment on Render.
 
-1.  Push your code to a GitHub/GitLab repository.
-2.  Create a new "Web Service" on Render and connect it to your repository.
+1.  Push your code (including `requirements.txt` and ensuring `.env` is in `.gitignore`) to a GitHub/GitLab repository.
+2.  Create a new **Web Service** on Render and connect it to your repository.
 3.  Configure the service settings:
-    * **Environment:** Python 3
-    * **Build Command:** `pip install -r requirements.txt` (Render usually detects this)
-    * **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT` (Render injects the `$PORT` variable)
-4.  **Add Environment Variables** in the Render service settings:
-    * `JULEP_API_KEY`
-    * `JULEP_AGENT_ID`
-    * `PYTHON_VERSION` (Specify a compatible Python 3 version, e.g., `3.11`)
-    * *(Any other necessary keys like `BRAVE_API_KEY` if used)*
-5.  Deploy the service.
-6.  **Live API Endpoint:** Render will provide a URL like `https://your-app-name.onrender.com`. Use this URL for API requests to the `/research` path.
+    *   **Environment:** `Python 3`
+    *   **Region:** Choose a suitable region.
+    *   **Build Command:** `pip install -r requirements.txt` (Render usually auto-detects this).
+    *   **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT` (Render injects the `$PORT` environment variable).
+4.  Add **Environment Variables** in the Render service settings (under the "Environment" tab):
+    *   `JULEP_API_KEY`: Your Julep API key.
+    *   `PYTHON_VERSION`: Specify a Python 3 version compatible with your code (e.g., `3.11`).
+    *   *(Add `JULEP_AGENT_ID` here only if you modify the code to require it)*
+5.  Deploy the service. Render will build and start your application.
+6.  **Live API Endpoint:** Render provides a public URL (e.g., `https://your-app-name.onrender.com`). Use this base URL for API requests to the `/research` path.
 
 ## 📚 `docs.julep.ai` Usage
 
-The official Julep AI documentation ([docs.julep.ai](https://docs.julep.ai/)) was consulted for:
+The official Julep AI documentation ([docs.julep.ai](https://docs.julep.ai/)) was essential for this project:
 
-* Understanding core concepts: Agents, Tasks, Sessions, Executions, Tools.
-* Agent configuration options and instruction design.
-* Task definition syntax (YAML), including input schema, tools integration (Wikipedia), and workflow steps (`tool`, `prompt`).
-* Using Python expressions (`$`, `_`) within task definitions.
-* Python SDK usage for creating Agents, Tasks, and Executions, and for polling execution status.
-* API reference for specific SDK methods and parameters.
+*   **Core Concepts:** Understanding Agents, Tasks, Tools, Sessions (and why Tasks were chosen here), and Executions.
+*   **Agent Creation:** Learning how to define `name`, `model`, `about`, and layered `instructions` using the Python SDK (`client.agents.create`).
+*   **Task Definition (`YAML`):** Understanding the schema for `create_task_request.json`, defining `input_schema`, integrating `tools` (specifically `wikipedia`), and structuring the `main` workflow with `tool` and `prompt` steps.
+*   **Dynamic YAML Content:** Using Python expressions (`$ f'...'`, accessing `steps[0].input`, `steps[0].output`, and `agent.name`) within the task YAML for dynamic prompt generation.
+*   **Python SDK:** Using `julep.Client`, `client.tasks.create` (associating `agent_id`), `client.executions.create` to run tasks with specific `input`, and `client.executions.get` to poll for status (`succeeded`, `failed`) and retrieve `output` or `error`.
+*   **API Reference:** Consulting specific method signatures and parameter requirements for the SDK functions used.
 
-## 🤔 Challenges (Example)
+## 🤔 Challenges & Learnings
 
-* **Task vs. Session:** Initially considered using Julep Sessions, but Tasks proved more suitable for this defined, multi-step workflow (tool call -> LLM processing) triggered by an API, rather than an ongoing conversation.
-* **YAML Syntax:** Ensuring correct indentation and Python expression syntax (`$ f'...'`, accessing step outputs like `steps[0].output`) within the `search_task.yaml` required careful checking against documentation.
-* **API Key Management:** Deciding how to securely provide API keys (like Brave's, if used) to the Julep Task. Using environment variables passed during application startup to modify the YAML dictionary in memory was one approach, though configuring secrets directly on the Julep Agent/Tool might be preferable if supported.
-* **Output Parsing:** Understanding the exact structure of the `result.output` from a task execution, especially when the last step uses `unwrap: true`.
-* **LLM Formatting:** Initially, the LLM generated all formats despite being asked for one. This required refining the system prompt in the task YAML to use conditional logic, ensuring only the relevant formatting instruction was passed for each specific execution.
+*   **Agent/Task Lifecycle:** The current approach creates the Agent and Task on *every* application startup (`service/agent.py`). While simple, this might create duplicate resources in Julep over time if not managed. A more robust approach would be to create them once, store their IDs (e.g., in environment variables or a database), and retrieve them using `client.agents.get` / `client.tasks.get` on startup. This project uses the create-on-startup method for simplicity.
+*   **Dynamic Prompting in YAML:** Crafting the system prompt within `search_task.yaml` to dynamically include *only* the relevant formatting instruction based on `steps[0].input.output_format` was key to ensuring the LLM focused correctly. This required careful use of Julep's Python expression support (`$ f'...'`) and conditional logic within the f-string.
+*   **Asynchronous Polling:** Julep task executions are asynchronous. The `execute_research_task` function in `service/agent.py` implements a polling loop using `client.executions.get` and `asyncio.sleep` to wait for the task to complete before returning the result to the FastAPI route.
+*   **Output Parsing:** Understanding that `unwrap: true` in the task's final prompt step makes `result.output` the direct string response from the LLM, simplifying response handling in the Python code.
+*   **Error Handling:** Implementing basic error handling for Julep API key issues, agent/task creation failures, and failed Julep executions, returning appropriate messages/status codes via FastAPI's `HTTPException`.
+*   **Tool Usage:** Integrating the standard `wikipedia` tool was straightforward using the `tools` and `tool` step definitions in the YAML.
 
 ---
 
-*This README provides a comprehensive guide to understanding, setting up, and using the Julep AI Research Assistant.*
+*This README provides a comprehensive guide to understanding, setting up, running, and deploying the Julep AI Research Assistant.*
